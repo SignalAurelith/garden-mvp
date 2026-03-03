@@ -17,21 +17,19 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const $ = (id)=>document.getElementById(id);
-const state = {
-  nodes: {},
-  edges: [],
-  selectedId: null,
-  rootId: null
-};
-
 const storageKey = "garden_mvp_state_v1";
 let currentUser = null;
+
+const state = {
+  map: { nodes:{}, edges:[], rootId:null },
+  stage: "login" // login | question | main
+};
 
 function saveState(){
   localStorage.setItem(storageKey, JSON.stringify(state));
   if(currentUser){
     const ref = doc(db, "users", currentUser.uid);
-    setDoc(ref, { map: state, updatedAt: new Date().toISOString() }, { merge: true });
+    setDoc(ref, { state, updatedAt: new Date().toISOString() }, { merge: true });
   }
 }
 
@@ -39,149 +37,98 @@ async function loadState(){
   if(currentUser){
     const ref = doc(db, "users", currentUser.uid);
     const snap = await getDoc(ref);
-    if(snap.exists() && snap.data().map){
-      Object.assign(state, snap.data().map);
+    if(snap.exists() && snap.data().state){
+      Object.assign(state, snap.data().state);
       return;
     }
   }
   const raw = localStorage.getItem(storageKey);
-  if(!raw) return;
-  const data = JSON.parse(raw);
-  Object.assign(state, data);
+  if(raw){
+    Object.assign(state, JSON.parse(raw));
+  }
 }
 
 function uid(){
   return "n_"+Math.random().toString(36).slice(2,10);
 }
 
-function createNode({title, def, points, example}){
-  const id = uid();
-  state.nodes[id] = {id, title, def, points, example};
-  return id;
-}
-
-function connect(a,b){
-  state.edges.push({from:a, to:b});
-}
-
-function clearSelection(){
-  state.selectedId = null;
-  $("nodeDetail").classList.add("hidden");
-  $("nodeEmpty").classList.remove("hidden");
-}
-
-function selectNode(id){
-  state.selectedId = id;
-  const n = state.nodes[id];
-  if(!n) return;
-  $("nodeTitle").value = n.title || "";
-  $("nodeDef").value = n.def || "";
-  $("nodePoints").value = n.points || "";
-  $("nodeExample").value = n.example || "";
-  $("nodeDetail").classList.remove("hidden");
-  $("nodeEmpty").classList.add("hidden");
-  renderMap();
-}
-
-function deleteNode(id){
-  delete state.nodes[id];
-  state.edges = state.edges.filter(e=>e.from!==id && e.to!==id);
-  if(state.rootId===id) state.rootId = null;
-  clearSelection();
-  saveState();
-  renderMap();
-}
-
-function buildPositions(){
-  const ids = Object.keys(state.nodes);
-  if(ids.length===0) return {};
-  const root = state.rootId || ids[0];
-  const positions = {};
-  const center = {x: 0.5, y: 0.5};
-  positions[root] = center;
-
-  const others = ids.filter(id=>id!==root);
-  const radius = 0.35;
-  others.forEach((id, idx)=>{
-    const angle = (idx/Math.max(1, others.length)) * Math.PI*2;
-    positions[id] = {
-      x: center.x + radius*Math.cos(angle),
-      y: center.y + radius*Math.sin(angle)
-    };
-  });
-  return positions;
-}
-
-function renderMap(){
-  const canvas = $("mapCanvas");
-  canvas.innerHTML = "";
-  const rect = canvas.getBoundingClientRect();
-  const positions = buildPositions();
-
-  // edges
-  state.edges.forEach(edge=>{
-    const a = positions[edge.from];
-    const b = positions[edge.to];
-    if(!a || !b) return;
-    const x1 = a.x * rect.width;
-    const y1 = a.y * rect.height;
-    const x2 = b.x * rect.width;
-    const y2 = b.y * rect.height;
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len = Math.sqrt(dx*dx + dy*dy);
-    const angle = Math.atan2(dy, dx) * 180/Math.PI;
-
-    const edgeEl = document.createElement("div");
-    edgeEl.className = "edge";
-    edgeEl.style.left = `${x1}px`;
-    edgeEl.style.top = `${y1}px`;
-    edgeEl.style.width = `${len}px`;
-    edgeEl.style.transform = `rotate(${angle}deg)`;
-    canvas.appendChild(edgeEl);
-  });
-
-  // nodes
-  Object.values(state.nodes).forEach(n=>{
-    const pos = positions[n.id] || {x:0.5,y:0.5};
-    const nodeEl = document.createElement("div");
-    nodeEl.className = "node" + (state.selectedId===n.id ? " selected" : "");
-    nodeEl.style.left = `${pos.x*rect.width - 60}px`;
-    nodeEl.style.top = `${pos.y*rect.height - 30}px`;
-    nodeEl.innerHTML = `<h4>${n.title || "(untitled)"}</h4><p>${(n.def||"").slice(0,70)}</p>`;
-    nodeEl.onclick = ()=>selectNode(n.id);
-    canvas.appendChild(nodeEl);
-  });
+function setStage(stage){
+  state.stage = stage;
+  $("loginPanel").classList.toggle("hidden", stage !== "login");
+  $("questionPanel").classList.toggle("hidden", stage !== "question");
+  $("mainPanel").classList.toggle("hidden", stage !== "main");
+  $("userIcon").classList.toggle("hidden", stage === "login");
 }
 
 function setAuthStatus(text){
   $("authStatus").textContent = text;
 }
 
-function toggleStart(visible){
-  const el = $("startSection");
-  if(!el) return;
-  if(visible){
-    el.classList.remove("hidden");
-  } else {
-    el.classList.add("hidden");
+function setUserIcon(email){
+  const letter = email ? email[0].toUpperCase() : "U";
+  $("userIcon").textContent = letter;
+}
+
+function setupVoice(){
+  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Speech){
+    $("voiceBtn").textContent = "🎙️ Voice (unsupported)";
+    $("voiceBtn").disabled = true;
+    return;
   }
+  const recog = new Speech();
+  recog.lang = "en-US";
+  recog.onresult = (e)=>{
+    const text = e.results[0][0].transcript;
+    $("questionInput").value = text;
+  };
+  $("voiceBtn").onclick = ()=>{ recog.start(); };
+}
+
+async function runAIPlaceholder(input){
+  $("questionStatus").textContent = "Analyzing...";
+  await new Promise(r=>setTimeout(r, 1200));
+  $("questionStatus").textContent = "";
+  return {
+    title: input,
+    definition: `Definition for ${input} (placeholder).`,
+    keyPoints: ["Point 1", "Point 2", "Point 3"],
+    example: `Example of ${input} (placeholder).`
+  };
+}
+
+function renderMainCard(card){
+  $("infoCard").textContent = "";
+  $("infoCard").innerHTML = `
+    <div><b>${card.title}</b></div>
+    <div>${card.definition}</div>
+    <ul>
+      ${card.keyPoints.map(p=>`<li>${p}</li>`).join("")}
+    </ul>
+    <div>${card.example}</div>
+  `;
+  $("chatArea").textContent = `You: ${card.title}`;
+  $("relatedNodes").innerHTML = `
+    <div class="chip">Related A</div>
+    <div class="chip">Related B</div>
+    <div class="chip">Related C</div>
+  `;
 }
 
 function init(){
-  if($("modal")) $("modal").classList.remove("show");
+  setupVoice();
+
   onAuthStateChanged(auth, async (user)=>{
     currentUser = user || null;
     if(user){
       setAuthStatus(`Signed in: ${user.email}`);
-      toggleStart(true);
+      setUserIcon(user.email);
       await loadState();
-      renderMap();
+      setStage(state.stage === "main" ? "main" : "question");
     } else {
       setAuthStatus("Not signed in");
-      toggleStart(false);
-      await loadState();
-      renderMap();
+      setUserIcon("U");
+      setStage("login");
     }
   });
 
@@ -199,83 +146,21 @@ function init(){
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
-  $("signOutBtn").onclick = async ()=>{
-    await signOut(auth);
-  };
+  document.addEventListener("keydown", async (e)=>{
+    if(e.key === "Escape" && currentUser){ await signOut(auth); }
+  });
 
-  $("createSeedBtn").onclick = ()=>{
-    const title = $("seedTitle").value.trim();
-    if(!title) return alert("Add a topic or question.");
-    const id = createNode({
-      title,
-      def: $("seedDef").value.trim(),
-      points: $("seedPoints").value.trim(),
-      example: $("seedExample").value.trim()
-    });
-    state.rootId = id;
+  $("submitQuestionBtn").onclick = async ()=>{
+    const input = $("questionInput").value.trim();
+    if(!input) return alert("Please enter something you love.");
+    const card = await runAIPlaceholder(input);
+    state.map.nodes = { [uid()]: card };
+    state.map.rootId = Object.keys(state.map.nodes)[0];
+    state.stage = "main";
     saveState();
-    renderMap();
-    selectNode(id);
+    setStage("main");
+    renderMainCard(card);
   };
-
-  $("saveNodeBtn").onclick = ()=>{
-    const id = state.selectedId; if(!id) return;
-    const n = state.nodes[id]; if(!n) return;
-    n.title = $("nodeTitle").value.trim();
-    n.def = $("nodeDef").value.trim();
-    n.points = $("nodePoints").value.trim();
-    n.example = $("nodeExample").value.trim();
-    saveState();
-    renderMap();
-  };
-
-  $("deleteNodeBtn").onclick = ()=>{
-    const id = state.selectedId; if(!id) return;
-    if(confirm("Delete this node?")) deleteNode(id);
-  };
-
-  $("addRelatedBtn").onclick = ()=>{
-    if(!state.selectedId) return alert("Select a node first.");
-    $("modal").classList.add("show");
-  };
-  $("cancelRelBtn").onclick = ()=>{
-    $("modal").classList.remove("show");
-  };
-  $("createRelBtn").onclick = ()=>{
-    const title = $("relTitle").value.trim();
-    if(!title) return alert("Add a title.");
-    const id = createNode({
-      title,
-      def: $("relDef").value.trim(),
-      points: $("relPoints").value.trim(),
-      example: $("relExample").value.trim()
-    });
-    if(state.selectedId) connect(state.selectedId, id);
-    saveState();
-    $("modal").classList.remove("show");
-    $("relTitle").value = $("relDef").value = $("relPoints").value = $("relExample").value = "";
-    renderMap();
-  };
-
-  $("newMapBtn").onclick = ()=>{
-    if(confirm("Start a new map? This clears local data.")){
-      localStorage.removeItem(storageKey);
-      state.nodes = {}; state.edges = []; state.selectedId = null; state.rootId = null;
-      renderMap();
-      clearSelection();
-    }
-  };
-
-  $("exportBtn").onclick = ()=>{
-    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "garden_mvp_map.json";
-    a.click();
-  };
-
-  $("centerBtn").onclick = ()=>renderMap();
 }
 
-window.addEventListener("resize", renderMap);
 init();
