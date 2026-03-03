@@ -15,10 +15,28 @@
 
   <main class="layout">
     <section class="panel">
+      <h2>Account</h2>
+      <div class="field">
+        <label>Email</label>
+        <input id="authEmail" type="email" placeholder="you@email.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="authPassword" type="password" placeholder="••••••••" />
+      </div>
+      <div class="actions">
+        <button id="signUpBtn" class="primary">Sign up</button>
+        <button id="signInBtn" class="ghost">Log in</button>
+        <button id="signOutBtn" class="ghost">Log out</button>
+      </div>
+      <div id="authStatus" class="hint">Not signed in</div>
+
+      <hr class="divider" />
+
       <h2>Start</h2>
       <div class="field">
-        <label>Question or topic</label>
-        <input id="seedTitle" type="text" placeholder="e.g., What is gravity?" />
+        <label>What do you love?</label>
+        <input id="seedTitle" type="text" placeholder="e.g., music, forests, space" />
       </div>
       <div class="field">
         <label>Definition (1–2 lines)</label>
@@ -105,6 +123,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
