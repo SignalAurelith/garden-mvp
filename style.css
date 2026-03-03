@@ -1,0 +1,42 @@
+:root{
+  --bg:#0f1115; --panel:#151923; --text:#e6e8ee; --muted:#9aa3b2;
+  --accent:#6ee7b7; --accent-2:#60a5fa; --danger:#ef4444;
+  --card:#1a2030; --line:#2a3144;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+.topbar{display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:20px}
+.subtitle{color:var(--muted)}
+.layout{display:grid;grid-template-columns:320px 1fr 320px;gap:16px;padding:16px}
+.panel{background:var(--panel);padding:14px;border:1px solid var(--line);border-radius:12px}
+.map{background:var(--panel);padding:10px;border:1px solid var(--line);border-radius:12px}
+.mapHeader{display:flex;align-items:center;justify-content:space-between;padding:6px 6px 10px}
+.mapCanvas{position:relative;height:75vh;background:var(--card);border:1px dashed var(--line);border-radius:12px;overflow:hidden}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+label{font-size:12px;color:var(--muted)}
+input,textarea{background:#0f1320;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px}
+textarea{resize:vertical}
+button{padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer}
+.primary{background:var(--accent);color:#0b0f14;font-weight:600}
+.ghost{background:transparent;color:var(--text);border-color:var(--line)}
+.danger{background:transparent;border-color:var(--danger);color:#fca5a5}
+.hint{font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);font-size:13px}
+.hidden{display:none}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.node{position:absolute;min-width:120px;max-width:180px;background:#111827;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.node h4{margin:0 0 6px;font-size:13px}
+.node p{margin:0;font-size:11px;color:var(--muted)}
+.node.selected{outline:2px solid var(--accent)}
+
+.edge{position:absolute;height:2px;background:#2f3850;transform-origin:left center}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+.modalCard{width:420px;background:var(--panel);padding:16px;border-radius:12px;border:1px solid var(--line)}
+
+@media (max-width: 1100px){
+  .layout{grid-template-columns:1fr;}
+  .mapCanvas{height:60vh}
+}
