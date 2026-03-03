@@ -7,15 +7,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar center">
     <div class="brand">The Garden</div>
-    <div class="subtitle">Mycelial Learning Map (MVP)</div>
-    <button id="newMapBtn" class="ghost">New Map</button>
+    <div class="spacer"></div>
+    <div id="userIcon" class="userIcon hidden">U</div>
   </header>
 
   <main class="layout">
-    <section class="panel">
-      <h2>Account</h2>
+    <!-- LOGIN ONLY -->
+    <section id="loginPanel" class="panel narrow">
+      <h2>Welcome</h2>
       <div class="field">
         <label>Email</label>
         <input id="authEmail" type="email" placeholder="you@email.com" />
@@ -27,103 +28,42 @@
       <div class="actions">
         <button id="signUpBtn" class="primary">Sign up</button>
         <button id="signInBtn" class="ghost">Log in</button>
-        <button id="signOutBtn" class="ghost">Log out</button>
       </div>
       <div id="authStatus" class="hint">Not signed in</div>
-
-      <hr class="divider" />
-
-      <div id="startSection" class="hidden">
-      <h2>Start</h2>
-      <div class="field">
-        <label>Name 1 thing you love</label>
-        <input id="seedTitle" type="text" placeholder="e.g., music" />
-      </div>
-      <div class="field">
-        <label>Definition (1–2 lines)</label>
-        <textarea id="seedDef" rows="2" placeholder="Short, clear definition"></textarea>
-      </div>
-      <div class="field">
-        <label>Key points (up to 3)</label>
-        <textarea id="seedPoints" rows="3" placeholder="• Point 1
-• Point 2
-• Point 3"></textarea>
-      </div>
-      <div class="field">
-        <label>Simple example</label>
-        <textarea id="seedExample" rows="2" placeholder="Concrete example"></textarea>
-      </div>
-      <button id="createSeedBtn" class="primary">Create first node</button>
-      <p class="hint">Start by naming one love. We’ll grow the map from there.</p>
-      </div>
     </section>
 
-    <section class="map">
-      <div class="mapHeader">
-        <h2>Map</h2>
-        <div class="mapActions">
-          <button id="centerBtn" class="ghost">Center</button>
-          <button id="exportBtn" class="ghost">Export JSON</button>
-        </div>
+    <!-- QUESTION AFTER LOGIN -->
+    <section id="questionPanel" class="panel hidden narrow">
+      <h2>Name 1 thing you love</h2>
+      <div class="field">
+        <input id="questionInput" type="text" placeholder="e.g., music" />
       </div>
-      <div id="mapCanvas" class="mapCanvas"></div>
+      <div class="actions">
+        <button id="voiceBtn" class="ghost">🎙️ Voice</button>
+        <button id="submitQuestionBtn" class="primary">Enter</button>
+      </div>
+      <div id="questionStatus" class="hint"></div>
     </section>
 
-    <section class="panel" id="detailPanel">
-      <h2>Node</h2>
-      <div id="nodeEmpty" class="empty">Select a node to see details.</div>
-      <div id="nodeDetail" class="hidden">
-        <div class="field">
-          <label>Title</label>
-          <input id="nodeTitle" type="text" />
+    <!-- MAIN APP AFTER SUBMIT -->
+    <section id="mainPanel" class="panel wide hidden">
+      <div class="split">
+        <div class="col">
+          <h3>Subject Chat</h3>
+          <div id="chatArea" class="card">Ask, explore, and refine the subject here.</div>
         </div>
-        <div class="field">
-          <label>Definition</label>
-          <textarea id="nodeDef" rows="2"></textarea>
-        </div>
-        <div class="field">
-          <label>Key points</label>
-          <textarea id="nodePoints" rows="3"></textarea>
-        </div>
-        <div class="field">
-          <label>Example</label>
-          <textarea id="nodeExample" rows="2"></textarea>
-        </div>
-        <div class="actions">
-          <button id="saveNodeBtn" class="primary">Save</button>
-          <button id="addRelatedBtn" class="ghost">Add related</button>
-          <button id="deleteNodeBtn" class="danger">Delete</button>
+        <div class="col">
+          <h3>Info Card</h3>
+          <div id="infoCard" class="card">Your subject’s structured card will appear here.</div>
+
+          <h3 class="mt">Related Nodes</h3>
+          <div id="relatedNodes" class="related">
+            <div class="chip">(coming soon)</div>
+          </div>
         </div>
       </div>
     </section>
   </main>
-
-  <!-- Modal: Add related -->
-  <div id="modal" class="modal">
-    <div class="modalCard">
-      <h3>Add Related Node</h3>
-      <div class="field">
-        <label>Title</label>
-        <input id="relTitle" type="text" />
-      </div>
-      <div class="field">
-        <label>Definition</label>
-        <textarea id="relDef" rows="2"></textarea>
-      </div>
-      <div class="field">
-        <label>Key points</label>
-        <textarea id="relPoints" rows="3"></textarea>
-      </div>
-      <div class="field">
-        <label>Example</label>
-        <textarea id="relExample" rows="2"></textarea>
-      </div>
-      <div class="actions">
-        <button id="createRelBtn" class="primary">Create</button>
-        <button id="cancelRelBtn" class="ghost">Cancel</button>
-      </div>
-    </div>
-  </div>
 
   <script type="module" src="app.js"></script>
 </body>
