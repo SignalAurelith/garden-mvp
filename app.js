@@ -169,6 +169,7 @@ function toggleStart(visible){
 }
 
 function init(){
+  if($("modal")) $("modal").classList.add("hidden");
   onAuthStateChanged(auth, async (user)=>{
     currentUser = user || null;
     if(user){
@@ -234,6 +235,7 @@ function init(){
   };
 
   $("addRelatedBtn").onclick = ()=>{
+    if(!state.selectedId) return alert("Select a node first.");
     $("modal").classList.remove("hidden");
   };
   $("cancelRelBtn").onclick = ()=>{
