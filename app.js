@@ -1,3 +1,21 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB59dTt-evr9KCjhxEYbqrUlto7Xhen5jg",
+  authDomain: "garden-aurelith.firebaseapp.com",
+  projectId: "garden-aurelith",
+  storageBucket: "garden-aurelith.firebasestorage.app",
+  messagingSenderId: "1081430888189",
+  appId: "1:1081430888189:web:b77475e6cfbd9b33cb3894",
+  measurementId: "G-HR6S5JN122"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 const $ = (id)=>document.getElementById(id);
 const state = {
   nodes: {},
@@ -7,11 +25,25 @@ const state = {
 };
 
 const storageKey = "garden_mvp_state_v1";
+let currentUser = null;
 
 function saveState(){
   localStorage.setItem(storageKey, JSON.stringify(state));
+  if(currentUser){
+    const ref = doc(db, "users", currentUser.uid);
+    setDoc(ref, { map: state, updatedAt: new Date().toISOString() }, { merge: true });
+  }
 }
-function loadState(){
+
+async function loadState(){
+  if(currentUser){
+    const ref = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(ref);
+    if(snap.exists() && snap.data().map){
+      Object.assign(state, snap.data().map);
+      return;
+    }
+  }
   const raw = localStorage.getItem(storageKey);
   if(!raw) return;
   const data = JSON.parse(raw);
@@ -122,11 +154,41 @@ function renderMap(){
   });
 }
 
+function setAuthStatus(text){
+  $("authStatus").textContent = text;
+}
+
 function init(){
-  loadState();
-  if(Object.keys(state.nodes).length){
-    renderMap();
-  }
+  onAuthStateChanged(auth, async (user)=>{
+    currentUser = user || null;
+    if(user){
+      setAuthStatus(`Signed in: ${user.email}`);
+      await loadState();
+      renderMap();
+    } else {
+      setAuthStatus("Not signed in");
+      await loadState();
+      renderMap();
+    }
+  });
+
+  $("signUpBtn").onclick = async ()=>{
+    const email = $("authEmail").value.trim();
+    const pass = $("authPassword").value.trim();
+    if(!email || !pass) return alert("Email and password required.");
+    await createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  $("signInBtn").onclick = async ()=>{
+    const email = $("authEmail").value.trim();
+    const pass = $("authPassword").value.trim();
+    if(!email || !pass) return alert("Email and password required.");
+    await signInWithEmailAndPassword(auth, email, pass);
+  };
+
+  $("signOutBtn").onclick = async ()=>{
+    await signOut(auth);
+  };
 
   $("createSeedBtn").onclick = ()=>{
     const title = $("seedTitle").value.trim();
