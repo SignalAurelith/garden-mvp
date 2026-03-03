@@ -158,15 +158,27 @@ function setAuthStatus(text){
   $("authStatus").textContent = text;
 }
 
+function toggleStart(visible){
+  const el = $("startSection");
+  if(!el) return;
+  if(visible){
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+
 function init(){
   onAuthStateChanged(auth, async (user)=>{
     currentUser = user || null;
     if(user){
       setAuthStatus(`Signed in: ${user.email}`);
+      toggleStart(true);
       await loadState();
       renderMap();
     } else {
       setAuthStatus("Not signed in");
+      toggleStart(false);
       await loadState();
       renderMap();
     }
