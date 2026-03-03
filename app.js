@@ -169,7 +169,7 @@ function toggleStart(visible){
 }
 
 function init(){
-  if($("modal")) $("modal").classList.add("hidden");
+  if($("modal")) $("modal").classList.remove("show");
   onAuthStateChanged(auth, async (user)=>{
     currentUser = user || null;
     if(user){
@@ -236,10 +236,10 @@ function init(){
 
   $("addRelatedBtn").onclick = ()=>{
     if(!state.selectedId) return alert("Select a node first.");
-    $("modal").classList.remove("hidden");
+    $("modal").classList.add("show");
   };
   $("cancelRelBtn").onclick = ()=>{
-    $("modal").classList.add("hidden");
+    $("modal").classList.remove("show");
   };
   $("createRelBtn").onclick = ()=>{
     const title = $("relTitle").value.trim();
@@ -252,7 +252,7 @@ function init(){
     });
     if(state.selectedId) connect(state.selectedId, id);
     saveState();
-    $("modal").classList.add("hidden");
+    $("modal").classList.remove("show");
     $("relTitle").value = $("relDef").value = $("relPoints").value = $("relExample").value = "";
     renderMap();
   };
